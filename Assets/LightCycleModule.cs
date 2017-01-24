@@ -20,11 +20,13 @@ public class LightCycleModule : MonoBehaviour
     public Material[] LitMats;
     public Material[] UnlitMats;
     public MeshRenderer[] Leds;
+    public MeshRenderer[] ConfirmLeds;
 
     public KMSelectable Button;
 
-    private int[] _order;
+    private int[] _colors;
     private int _curLed;
+    private bool _isSolved;
 
     private static string[][] _table = @"
 5B;BR;MG;Y5;41;RW;64;16;23;3M;GY;W2
@@ -67,17 +69,21 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 
     void Start()
     {
-        _order = Enumerable.Range(0, 6).ToArray();
-        _order.Shuffle();
+        _colors = Enumerable.Range(0, 6).ToArray();
+        _colors.Shuffle();
+        _isSolved = false;
 
         for (int i = 0; i < 6; i++)
-            Leds[i].materials = new[] { UnlitMats[_order[i]] };
+        {
+            Leds[i].material = UnlitMats[_colors[i]];
+            ConfirmLeds[i].material = UnlitMats[5];
+        }
 
         StartCoroutine(Blinkenlights());
 
         Module.OnActivate = delegate
         {
-            var sequence = _order.ToArray();
+            var sequence = _colors.ToArray();
             var colors = "RYGBMW";
             Debug.LogFormat("[Light Cycle] Start sequence: {0}", sequence.Select(x => colors[x]).JoinString());
 
@@ -104,27 +110,28 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
             }
 
             var seqIndex = 0;
-            var solved = false;
             Button.OnInteract = delegate
             {
                 Button.AddInteractionPunch();
                 Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Button.transform);
-                if (solved)
+                if (_isSolved)
                     return false;
 
-                if (sequence[seqIndex] != _order[_curLed])
+                if (sequence[seqIndex] != _colors[_curLed])
                 {
-                    Debug.LogFormat("[Light Cycle] Pressed button at {0}, but expected {1}.", colors[_order[_curLed]], colors[sequence[seqIndex]]);
+                    Debug.LogFormat("[Light Cycle] Pressed button at {0}, but expected {1}.", colors[_colors[_curLed]], colors[sequence[seqIndex]]);
                     Module.HandleStrike();
                 }
                 else
                 {
-                    Debug.LogFormat("[Light Cycle] Pressed button at {0}: correct.", colors[_order[_curLed]]);
+                    ConfirmLeds[_curLed].material = LitMats[5];
+                    Debug.LogFormat("[Light Cycle] Pressed button at {0}: correct.", colors[_colors[_curLed]]);
                     seqIndex++;
+                    Audio.PlaySoundAtTransform("Ding" + seqIndex, Leds[_curLed].transform);
                     if (seqIndex == sequence.Length)
                     {
-                        Module.HandlePass();
-                        solved = true;
+                        _isSolved = true;
+                        StartCoroutine(Victory());
                     }
                 }
                 return false;
@@ -132,14 +139,27 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         };
     }
 
+    private IEnumerator Victory()
+    {
+        yield return new WaitForSeconds(.5f);
+        for (int i = 0; i < 6; i++)
+        {
+            Leds[i].material = LitMats[_colors[i]];
+            Audio.PlaySoundAtTransform("Ding" + (i + 1), Button.transform);
+            yield return new WaitForSeconds(.05f);
+            Leds[i].material = UnlitMats[_colors[i]];
+        }
+        Module.HandlePass();
+    }
+
     private IEnumerator Blinkenlights()
     {
         _curLed = 0;
-        while (true)
+        while (!_isSolved)
         {
-            Leds[_curLed].material = LitMats[_order[_curLed]];
+            Leds[_curLed].material = LitMats[_colors[_curLed]];
             yield return new WaitForSeconds(.5f);
-            Leds[_curLed].material = UnlitMats[_order[_curLed]];
+            Leds[_curLed].material = UnlitMats[_colors[_curLed]];
 
             _curLed = (_curLed + 1) % 6;
         }
