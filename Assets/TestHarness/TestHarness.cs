@@ -172,9 +172,9 @@ public class FakeBombInfo : MonoBehaviour
         };
         string str1 = string.Empty;
         for (int index = 0; index < 2; ++index) str1 = str1 + possibleCharArray[Random.Range(0, possibleCharArray.Length)];
-        string str2 = str1 + (object) Random.Range(0, 9);
+        string str2 = str1 + (object) Random.Range(0, 10);
         for (int index = 3; index < 5; ++index) str2 = str2 + possibleCharArray[Random.Range(0, possibleCharArray.Length - 10)];
-        serial = str2 + Random.Range(0, 9);
+        serial = str2 + Random.Range(0, 10);
 
         Debug.Log("Serial: " + serial);
     }
