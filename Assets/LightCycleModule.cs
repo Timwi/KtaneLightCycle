@@ -28,6 +28,9 @@ public class LightCycleModule : MonoBehaviour
     private int _curLed;
     private bool _isSolved;
 
+    private static int _moduleIdCounter = 1;
+    private int _moduleId;
+
     private static string[][] _table = @"
 5B;BR;MG;Y5;41;RW;64;16;23;3M;GY;W2
 2R;6M;43;5B;R5;Y2;1G;MY;W6;34;BW;G1
@@ -69,6 +72,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 
     void Start()
     {
+        _moduleId = _moduleIdCounter++;
         _colors = Enumerable.Range(0, 6).ToArray();
         _colors.Shuffle();
         _isSolved = false;
@@ -85,7 +89,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         {
             var sequence = _colors.ToArray();
             var colors = "RYGBMW";
-            Debug.LogFormat("[Light Cycle] Start sequence: {0}", sequence.Select(x => colors[x]).JoinString());
+            Debug.LogFormat("[Light Cycle #{1}] Start sequence: {0}", sequence.Select(x => colors[x]).JoinString(), _moduleId);
 
             var serial = Bomb.GetSerialNumber();
             for (int i = 0; i < 6; i++)
@@ -106,7 +110,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
                 var t = sequence[ix1];
                 sequence[ix1] = sequence[ix2];
                 sequence[ix2] = t;
-                Debug.LogFormat("[Light Cycle] SN {0}{1}, swap {2}/{3}, sequence now: {4}", serial[i], serial[5 - i], entry[0], entry[1], sequence.Select(x => colors[x]).JoinString());
+                Debug.LogFormat("[Light Cycle #{5}] SN {0}{1}, swap {2}/{3}, sequence now: {4}", serial[i], serial[5 - i], entry[0], entry[1], sequence.Select(x => colors[x]).JoinString(), _moduleId);
             }
 
             var seqIndex = 0;
@@ -119,13 +123,13 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 
                 if (sequence[seqIndex] != _colors[_curLed])
                 {
-                    Debug.LogFormat("[Light Cycle] Pressed button at {0}, but expected {1}.", colors[_colors[_curLed]], colors[sequence[seqIndex]]);
+                    Debug.LogFormat("[Light Cycle #{2}] Pressed button at {0}, but expected {1}.", colors[_colors[_curLed]], colors[sequence[seqIndex]], _moduleId);
                     Module.HandleStrike();
                 }
                 else
                 {
                     ConfirmLeds[_curLed].material = LitMats[5];
-                    Debug.LogFormat("[Light Cycle] Pressed button at {0}: correct.", colors[_colors[_curLed]]);
+                    Debug.LogFormat("[Light Cycle #{1}] Pressed button at {0}: correct.", colors[_colors[_curLed]], _moduleId);
                     seqIndex++;
                     Audio.PlaySoundAtTransform("Ding" + seqIndex, Leds[_curLed].transform);
                     if (seqIndex == sequence.Length)
