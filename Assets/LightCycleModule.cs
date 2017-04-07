@@ -27,6 +27,9 @@ public class LightCycleModule : MonoBehaviour
     private int[] _colors;
     private int _curLed;
     private bool _isSolved;
+    private int _seqIndex = 0;
+    private int[] _solution;
+    private const string _colorNames = "RYGBMW";
 
     private static int _moduleIdCounter = 1;
     private int _moduleId;
@@ -85,62 +88,70 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 
         StartCoroutine(Blinkenlights());
 
-        Module.OnActivate = delegate
+        Module.OnActivate = Activate;
+    }
+
+    void Activate()
+    {
+        Debug.LogFormat("[Light Cycle #{1}] Start sequence: {0}", _colors.Select(x => _colorNames[x]).JoinString(), _moduleId);
+
+        _solution = _colors.ToArray();
+        var serial = Bomb.GetSerialNumber();
+        for (int i = 0; i < 6; i++)
         {
-            var sequence = _colors.ToArray();
-            var colors = "RYGBMW";
-            Debug.LogFormat("[Light Cycle #{1}] Start sequence: {0}", sequence.Select(x => colors[x]).JoinString(), _moduleId);
+            var ch1 = convert(serial[i]);
+            var ch2 = convert(serial[5 - i]);
+            var entry = _table[ch1][ch2 / 3];
+            var ix1 = _colorNames.IndexOf(entry[0]);
+            if (ix1 == -1)
+                ix1 = entry[0] - '1';
+            else
+                ix1 = Array.IndexOf(_solution, ix1);
+            var ix2 = _colorNames.IndexOf(entry[1]);
+            if (ix2 == -1)
+                ix2 = entry[1] - '1';
+            else
+                ix2 = Array.IndexOf(_solution, ix2);
+            var t = _solution[ix1];
+            _solution[ix1] = _solution[ix2];
+            _solution[ix2] = t;
+            Debug.LogFormat("[Light Cycle #{5}] SN {0}{1}, swap {2}/{3}, sequence now: {4}", serial[i], serial[5 - i], entry[0], entry[1], _solution.Select(x => _colorNames[x]).JoinString(), _moduleId);
+        }
 
-            var serial = Bomb.GetSerialNumber();
-            for (int i = 0; i < 6; i++)
-            {
-                var ch1 = convert(serial[i]);
-                var ch2 = convert(serial[5 - i]);
-                var entry = _table[ch1][ch2 / 3];
-                var ix1 = colors.IndexOf(entry[0]);
-                if (ix1 == -1)
-                    ix1 = entry[0] - '1';
-                else
-                    ix1 = Array.IndexOf(sequence, ix1);
-                var ix2 = colors.IndexOf(entry[1]);
-                if (ix2 == -1)
-                    ix2 = entry[1] - '1';
-                else
-                    ix2 = Array.IndexOf(sequence, ix2);
-                var t = sequence[ix1];
-                sequence[ix1] = sequence[ix2];
-                sequence[ix2] = t;
-                Debug.LogFormat("[Light Cycle #{5}] SN {0}{1}, swap {2}/{3}, sequence now: {4}", serial[i], serial[5 - i], entry[0], entry[1], sequence.Select(x => colors[x]).JoinString(), _moduleId);
-            }
-
-            var seqIndex = 0;
-            Button.OnInteract = delegate
-            {
-                Button.AddInteractionPunch();
-                Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Button.transform);
-                if (_isSolved)
-                    return false;
-
-                if (sequence[seqIndex] != _colors[_curLed])
-                {
-                    Debug.LogFormat("[Light Cycle #{2}] Pressed button at {0}, but expected {1}.", colors[_colors[_curLed]], colors[sequence[seqIndex]], _moduleId);
-                    Module.HandleStrike();
-                }
-                else
-                {
-                    ConfirmLeds[_curLed].material = LitMats[5];
-                    Debug.LogFormat("[Light Cycle #{1}] Pressed button at {0}: correct.", colors[_colors[_curLed]], _moduleId);
-                    seqIndex++;
-                    Audio.PlaySoundAtTransform("Ding" + seqIndex, Leds[_curLed].transform);
-                    if (seqIndex == sequence.Length)
-                    {
-                        _isSolved = true;
-                        StartCoroutine(Victory());
-                    }
-                }
-                return false;
-            };
+        Button.OnInteract = delegate
+        {
+            ProcessButtonPress();
+            return false;
         };
+    }
+
+    bool? ProcessButtonPress()
+    {
+        Button.AddInteractionPunch();
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, Button.transform);
+        if (_isSolved)
+            return null;
+
+        if (_solution[_seqIndex] != _colors[_curLed])
+        {
+            Debug.LogFormat("[Light Cycle #{2}] Pressed button at {0}, but expected {1}.", _colorNames[_colors[_curLed]], _colorNames[_solution[_seqIndex]], _moduleId);
+            Module.HandleStrike();
+            return false;
+        }
+        else
+        {
+            ConfirmLeds[_curLed].material = LitMats[5];
+            Debug.LogFormat("[Light Cycle #{1}] Pressed button at {0}: correct.", _colorNames[_colors[_curLed]], _moduleId);
+            _seqIndex++;
+            Audio.PlaySoundAtTransform("Ding" + _seqIndex, Leds[_curLed].transform);
+            if (_seqIndex == _solution.Length)
+            {
+                _isSolved = true;
+                StartCoroutine(Victory());
+                return true;
+            }
+        }
+        return null;
     }
 
     private IEnumerator Victory()
@@ -172,5 +183,48 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
     private int convert(char ch)
     {
         return ch >= 'A' && ch <= 'Z' ? ch - 'A' : ch - '0' + 26;
+    }
+
+    public IEnumerator ProcessTwitchCommand(string command)
+    {
+        if (_isSolved)
+            yield break;
+
+        command = command.Trim().ToUpperInvariant();
+
+        for (int i = 0; i < command.Length; i++)
+        {
+            // Allow spaces
+            if (command[i] == ' ')
+                continue;
+
+            var waitingForColor = _colorNames.IndexOf(command[i]);
+            // If the command contains any unrecognized color characters, stop here
+            if (waitingForColor == -1)
+                yield break;
+
+            // Wait for the light cycle to get to the requested color
+            while (_colors[_curLed] != waitingForColor)
+                yield return new WaitForSeconds(.1f);
+
+            // Push the button. ProcessButtonPress() has been written so that it will return
+            //  true if this results in a solve;
+            //  false if this results in a strike;
+            //  null otherwise.
+            var result = ProcessButtonPress();
+            if (result == true)
+            {
+                // We need to communicate the solve to TwitchPlays because it hasn’t happened yet;
+                // it happens after a flourish animation.
+                yield return "solve";
+                yield break;
+            }
+            else if (result == false)
+            {
+                // We do not communicate the strike because it already happened during the ProcessButtonPress() call.
+                // TwitchPlays will process it automatically.
+                yield break;
+            }
+        }
     }
 }
