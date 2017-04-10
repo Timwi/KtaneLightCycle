@@ -656,6 +656,21 @@ public class TestHarness : MonoBehaviour
         }
     }
 
+    void HandleModule(MonoBehaviour module)
+    {
+        Component[] allComponents = module.gameObject.GetComponentsInChildren<Component>(true);
+        foreach (Component component in allComponents)
+        {
+            System.Type type = component.GetType();
+            MethodInfo method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (method != null)
+            {
+                StartCoroutine(SimulateModule(component, method, command));
+            }
+        }
+    }
+
     Dictionary<Component, HashSet<KMSelectable>> ComponentHelds = new Dictionary<Component, HashSet<KMSelectable>> { };
     IEnumerator SimulateModule(Component component, MethodInfo method, string command)
     {
@@ -787,21 +802,17 @@ public class TestHarness : MonoBehaviour
         if (GUILayout.Button("Simulate Twitch Command"))
         {
             Debug.Log("Twitch Command: " + command);
-
+            
             foreach (KMBombModule module in FindObjectsOfType<KMBombModule>())
             {
-                Component[] allComponents = module.gameObject.GetComponentsInChildren<Component>(true);
-                foreach (Component component in allComponents)
-                {
-                    System.Type type = component.GetType();
-                    MethodInfo method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-                    if (method != null)
-                    {
-                        StartCoroutine(SimulateModule(component, method, command));
-                    }
-                }
+                HandleModule(module);
             }
+
+            foreach (KMNeedyModule module in FindObjectsOfType<KMNeedyModule>())
+            {
+                HandleModule(module);
+            }
+
             command = "";
         }
     }
