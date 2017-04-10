@@ -1,10 +1,10 @@
-﻿using UnityEngine;
-using UnityEditor;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
 using System.Reflection;
 using Newtonsoft.Json;
+using UnityEditor;
+using UnityEngine;
 
 public class FakeBombInfo : MonoBehaviour
 {
@@ -642,6 +642,107 @@ public class TestHarness : MonoBehaviour
         }
     }
 
+    // TPK Methods
+    protected void DoInteractionStart(KMSelectable interactable)
+    {
+        interactable.OnInteract();
+    }
+
+    protected void DoInteractionEnd(KMSelectable interactable)
+    {
+        if (interactable.OnInteractEnded != null)
+        {
+            interactable.OnInteractEnded();
+        }
+    }
+
+    Dictionary<Component, HashSet<KMSelectable>> ComponentHelds = new Dictionary<Component, HashSet<KMSelectable>> { };
+    IEnumerator SimulateModule(Component component, MethodInfo method, string command)
+    {
+        // Simple Command
+        if (method.ReturnType == typeof(KMSelectable[]))
+        {
+            KMSelectable[] selectableSequence = null;
+            try
+            {
+                selectableSequence = (KMSelectable[]) method.Invoke(component, new object[] { command });
+                if (selectableSequence == null)
+                {
+                    yield break;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogErrorFormat("An exception occurred while trying to invoke {0}.{1}; the command invokation will not continue.", method.DeclaringType.FullName, method.Name);
+                Debug.LogException(ex);
+                yield break;
+            }
+
+            int initialStrikes = fakeInfo.strikes;
+            int initialSolved = fakeInfo.GetSolvedModuleNames().Count;
+            foreach (KMSelectable selectable in selectableSequence)
+            {
+                DoInteractionStart(selectable);
+                yield return new WaitForSeconds(0.1f);
+                DoInteractionEnd(selectable);
+
+                if (fakeInfo.strikes != initialStrikes || fakeInfo.GetSolvedModuleNames().Count != initialSolved)
+                {
+                    break;
+                }
+            };
+        }
+
+        // Complex Commands
+        if (method.ReturnType == typeof(IEnumerator))
+        {
+            IEnumerator responseCoroutine = null;
+            try
+            {
+                responseCoroutine = (IEnumerator) method.Invoke(component, new object[] { command });
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogErrorFormat("An exception occurred while trying to invoke {0}.{1}; the command invokation will not continue.", method.DeclaringType.FullName, method.Name);
+                Debug.LogException(ex);
+                yield break;
+            }
+
+            if (responseCoroutine == null)
+                yield break;
+
+            if (!ComponentHelds.ContainsKey(component))
+                ComponentHelds[component] = new HashSet<KMSelectable>();
+            HashSet<KMSelectable> heldSelectables = ComponentHelds[component];
+
+            int initialStrikes = fakeInfo.strikes;
+            int initialSolved = fakeInfo.GetSolvedModuleNames().Count;
+
+            while (responseCoroutine.MoveNext())
+            {
+                object currentObject = responseCoroutine.Current;
+                if (currentObject is KMSelectable)
+                {
+                    KMSelectable selectable = (KMSelectable) currentObject;
+                    if (heldSelectables.Contains(selectable))
+                    {
+                        DoInteractionEnd(selectable);
+                        heldSelectables.Remove(selectable);
+                        if (fakeInfo.strikes != initialStrikes || fakeInfo.GetSolvedModuleNames().Count != initialSolved)
+                            yield break;
+                    }
+                    else
+                    {
+                        DoInteractionStart(selectable);
+                        heldSelectables.Add(selectable);
+                    }
+                }
+                yield return currentObject;
+            }
+        }
+    }
+
+    string command = "";
     void OnGUI()
     {
         if (GUILayout.Button("Activate Needy Modules"))
@@ -679,6 +780,30 @@ public class TestHarness : MonoBehaviour
         }
 
         GUILayout.Label("Time remaining: " + fakeInfo.GetFormattedTime());
+
+        GUILayout.Space(10);
+
+        command = GUILayout.TextField(command);
+        if (GUILayout.Button("Simulate Twitch Command"))
+        {
+            Debug.Log("Twitch Command: " + command);
+
+            foreach (KMBombModule module in FindObjectsOfType<KMBombModule>())
+            {
+                Component[] allComponents = module.gameObject.GetComponentsInChildren<Component>(true);
+                foreach (Component component in allComponents)
+                {
+                    System.Type type = component.GetType();
+                    MethodInfo method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                    if (method != null)
+                    {
+                        StartCoroutine(SimulateModule(component, method, command));
+                    }
+                }
+            }
+            command = "";
+        }
     }
 
     public void TurnLightsOn()
