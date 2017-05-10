@@ -656,23 +656,8 @@ public class TestHarness : MonoBehaviour
         }
     }
 
-    void HandleModule(MonoBehaviour module)
-    {
-        Component[] allComponents = module.gameObject.GetComponentsInChildren<Component>(true);
-        foreach (Component component in allComponents)
-        {
-            System.Type type = component.GetType();
-            MethodInfo method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            if (method != null)
-            {
-                StartCoroutine(SimulateModule(component, method, command));
-            }
-        }
-    }
-
     Dictionary<Component, HashSet<KMSelectable>> ComponentHelds = new Dictionary<Component, HashSet<KMSelectable>> { };
-    IEnumerator SimulateModule(Component component, MethodInfo method, string command)
+    IEnumerator SimulateModule(Component component, Transform moduleTransform, MethodInfo method, string command)
     {
         // Simple Command
         if (method.ReturnType == typeof(KMSelectable[]))
@@ -752,6 +737,14 @@ public class TestHarness : MonoBehaviour
                         heldSelectables.Add(selectable);
                     }
                 }
+                else if (currentObject is string)
+                {
+                    Debug.Log("Twitch handler sent: " + currentObject);
+                }
+                else if (currentObject is Quaternion)
+                {
+                    moduleTransform.localRotation = (Quaternion) currentObject;
+                }
                 yield return currentObject;
             }
         }
@@ -799,20 +792,24 @@ public class TestHarness : MonoBehaviour
         GUILayout.Space(10);
 
         command = GUILayout.TextField(command);
-        if (GUILayout.Button("Simulate Twitch Command"))
+        if ((GUILayout.Button("Simulate Twitch Command") || Event.current.keyCode == KeyCode.Return) && command != "")
         {
             Debug.Log("Twitch Command: " + command);
-            
+
             foreach (KMBombModule module in FindObjectsOfType<KMBombModule>())
             {
-                HandleModule(module);
-            }
+                Component[] allComponents = module.gameObject.GetComponentsInChildren<Component>(true);
+                foreach (Component component in allComponents)
+                {
+                    System.Type type = component.GetType();
+                    MethodInfo method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-            foreach (KMNeedyModule module in FindObjectsOfType<KMNeedyModule>())
-            {
-                HandleModule(module);
+                    if (method != null)
+                    {
+                        StartCoroutine(SimulateModule(component, module.transform, method, command));
+                    }
+                }
             }
-
             command = "";
         }
     }
