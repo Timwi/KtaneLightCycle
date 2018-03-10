@@ -10,8 +10,13 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
   m_Name: ModConfig
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   id: LightCycle
   title: Light Cycle
+  description: "The name \u201Cblinkenlights\u201D was taken.\n\nModule created by
+    Rexkix, implemented by Timwi.\n\n[url=http://ktane.timwi.de/PDF/Light%20Cycle.pdf]Manual
+    PDF[/url]\n[url=http://ktane.timwi.de/HTML/Light%20Cycle.html]Manual HTML[/url]\n[b][url=https://www.youtube.com/watch?v=u7pRM0IhHWw]Tutorial
+    video[/url] (thanks Elias!)[/b]"
   version: 1.0
   outputFolder: build
+  previewImage: {fileID: 2800000, guid: bd5c1f4881f57d54481b44e4c8a7779a, type: 3}
