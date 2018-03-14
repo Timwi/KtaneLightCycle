@@ -185,6 +185,10 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         return ch >= 'A' && ch <= 'Z' ? ch - 'A' : ch - '0' + 26;
     }
 
+#pragma warning disable 414
+    private string TwitchHelpMessage = @"Submit your answer with “!{0} B R W M G Y”. Permissible colors are R (red), Y (yellow), G (green), B (blue), M (magenta), and W (white).";
+#pragma warning restore 414
+
     public IEnumerator ProcessTwitchCommand(string command)
     {
         if (_isSolved)
@@ -192,19 +196,23 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 
         command = command.Trim().ToUpperInvariant();
 
-        for (int i = 0; i < command.Length; i++)
+        var colors = command.Where(ch => !char.IsWhiteSpace(ch)).Select(ch => new { Index = _colorNames.IndexOf(ch), Char = ch }).ToArray();
+        if (colors.Length == 0)
+            yield break;
+
+        var invalid = colors.FirstOrDefault(col => col.Index == -1);
+        if (invalid != null)
         {
-            // Allow spaces
-            if (command[i] == ' ')
-                continue;
+            yield return string.Format("sendtochaterror {0} is not a valid color.", invalid.Char);
+            yield break;
+        }
 
-            var waitingForColor = _colorNames.IndexOf(command[i]);
-            // If the command contains any unrecognized color characters, stop here
-            if (waitingForColor == -1)
-                yield break;
+        yield return null;
 
+        for (int i = 0; i < colors.Length; i++)
+        {
             // Wait for the light cycle to get to the requested color
-            while (_colors[_curLed] != waitingForColor)
+            while (_colors[_curLed] != colors[i].Index)
                 yield return new WaitForSeconds(.1f);
 
             // Push the button. ProcessButtonPress() has been written so that it will return
