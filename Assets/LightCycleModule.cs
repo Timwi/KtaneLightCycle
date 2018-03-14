@@ -200,14 +200,14 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         if (colors.Length == 0)
             yield break;
 
+        yield return null;
+
         var invalid = colors.FirstOrDefault(col => col.Index == -1);
         if (invalid != null)
         {
             yield return string.Format("sendtochaterror {0} is not a valid color.", invalid.Char);
             yield break;
         }
-
-        yield return null;
 
         for (int i = 0; i < colors.Length; i++)
         {
