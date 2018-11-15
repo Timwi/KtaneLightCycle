@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using EdgeworkConfigurator;
 using Newtonsoft.Json;
 using UnityEngine;
-using EdgeworkConfigurator;
 
 public class FakeBombInfo : MonoBehaviour
 {
@@ -18,7 +18,7 @@ public class FakeBombInfo : MonoBehaviour
     {
         List<string> ports;
 
-        public PortWidget(List<string> portNames=null)
+        public PortWidget(List<string> portNames = null)
         {
             ports = new List<string>();
             string portList = "";
@@ -78,7 +78,7 @@ public class FakeBombInfo : MonoBehaviour
         {
             if (key == KMBombInfo.QUERYKEY_GET_PORTS)
             {
-                return JsonConvert.SerializeObject((object)new Dictionary<string, List<string>>()
+                return JsonConvert.SerializeObject(new Dictionary<string, List<string>>()
                 {
                     {
                         "presentPorts", ports
@@ -102,7 +102,7 @@ public class FakeBombInfo : MonoBehaviour
         private string val;
         private bool on;
 
-        public IndicatorWidget(string label=null, IndicatorState state=IndicatorState.RANDOM)
+        public IndicatorWidget(string label = null, IndicatorState state = IndicatorState.RANDOM)
         {
             if (label == null)
             {
@@ -138,7 +138,7 @@ public class FakeBombInfo : MonoBehaviour
         {
             if (key == KMBombInfo.QUERYKEY_GET_INDICATOR)
             {
-                return JsonConvert.SerializeObject((object)new Dictionary<string, string>()
+                return JsonConvert.SerializeObject(new Dictionary<string, string>()
                 {
                     {
                         "label", val
@@ -156,7 +156,7 @@ public class FakeBombInfo : MonoBehaviour
     {
         private int batt;
 
-        public BatteryWidget(int battCount=-1)
+        public BatteryWidget(int battCount = -1)
         {
             if (battCount == -1)
             {
@@ -174,7 +174,7 @@ public class FakeBombInfo : MonoBehaviour
         {
             if (key == KMBombInfo.QUERYKEY_GET_BATTERIES)
             {
-                return JsonConvert.SerializeObject((object)new Dictionary<string, int>()
+                return JsonConvert.SerializeObject(new Dictionary<string, int>()
                 {
                     {
                         "numbatteries", batt
@@ -262,18 +262,18 @@ public class FakeBombInfo : MonoBehaviour
         if (timeLeft < 60)
         {
             if (timeLeft < 10) time += "0";
-            time += (int)timeLeft;
+            time += (int) timeLeft;
             time += ".";
-            int s = (int)(timeLeft * 100);
+            int s = (int) (timeLeft * 100);
             if (s < 10) time += "0";
             time += s;
         }
         else
         {
             if (timeLeft < 600) time += "0";
-            time += (int)timeLeft / 60;
+            time += (int) timeLeft / 60;
             time += ":";
-            int s = (int)timeLeft % 60;
+            int s = (int) timeLeft % 60;
             if (s < 10) time += "0";
             time += s;
         }
@@ -317,7 +317,7 @@ public class FakeBombInfo : MonoBehaviour
         List<string> moduleList = new List<string>();
         foreach (KeyValuePair<KMBombModule, bool> m in modules)
         {
-            if(m.Value) moduleList.Add(m.Key.ModuleDisplayName);
+            if (m.Value) moduleList.Add(m.Key.ModuleDisplayName);
         }
         return moduleList;
     }
@@ -327,7 +327,7 @@ public class FakeBombInfo : MonoBehaviour
         List<string> responses = new List<string>();
         if (queryKey == KMBombInfo.QUERYKEY_GET_SERIAL_NUMBER)
         {
-            responses.Add(JsonConvert.SerializeObject((object)new Dictionary<string, string>()
+            responses.Add(JsonConvert.SerializeObject(new Dictionary<string, string>()
             {
                 {
                     "serial", serial
@@ -339,8 +339,6 @@ public class FakeBombInfo : MonoBehaviour
             string r = w.GetResult(queryKey, queryInfo);
             if (r != null) responses.Add(r);
         }
-        if (queryKey == "Unity")
-            responses.Add(JsonConvert.SerializeObject(new Dictionary<string, bool>() { { "Unity", true } }));
         return responses;
     }
 
@@ -408,11 +406,11 @@ public class FakeBombInfo : MonoBehaviour
     /// <param name="config"></param>
     public void SetupEdgework(EdgeworkConfiguration config)
     {
-        if (config == null) 
+        if (config == null)
         {
             const int numWidgets = 5;
             widgets = new Widget[numWidgets];
-            for (int a = 0; a < numWidgets; a++) 
+            for (int a = 0; a < numWidgets; a++)
             {
                 int r = Random.Range(0, 3);
                 if (r == 0) widgets[a] = new PortWidget();
@@ -421,22 +419,22 @@ public class FakeBombInfo : MonoBehaviour
             }
             string str1 = string.Empty;
             for (int index = 0; index < 2; ++index) str1 = str1 + SerialNumberPossibleCharArray[Random.Range(0, SerialNumberPossibleCharArray.Length)];
-            string str2 = str1 + (object)Random.Range(0, 10);
+            string str2 = str1 + Random.Range(0, 10);
             for (int index = 3; index < 5; ++index) str2 = str2 + SerialNumberPossibleCharArray[Random.Range(0, SerialNumberPossibleCharArray.Length - 10)];
             serial = str2 + Random.Range(0, 10);
 
             Debug.Log("Serial: " + serial);
-        } 
+        }
         else
         {
             if (config.SerialNumberType == SerialNumberType.RANDOM_NORMAL)
             {
                 string str1 = string.Empty;
                 for (int index = 0; index < 2; ++index) str1 = str1 + SerialNumberPossibleCharArray[Random.Range(0, SerialNumberPossibleCharArray.Length)];
-                string str2 = str1 + (object)Random.Range(0, 10);
+                string str2 = str1 + Random.Range(0, 10);
                 for (int index = 3; index < 5; ++index) str2 = str2 + SerialNumberPossibleCharArray[Random.Range(0, SerialNumberPossibleCharArray.Length - 10)];
                 serial = str2 + Random.Range(0, 10);
-            } 
+            }
             else if (config.SerialNumberType == SerialNumberType.RANDOM_ANY)
             {
                 string res = string.Empty;
@@ -472,14 +470,14 @@ public class FakeBombInfo : MonoBehaviour
                                 if (widgetConfig.BatteryType == BatteryType.CUSTOM)
                                 {
                                     widgetsResult.Add(new BatteryWidget(widgetConfig.BatteryCount));
-                                } 
+                                }
                                 else if (widgetConfig.BatteryType == BatteryType.RANDOM)
                                 {
                                     widgetsResult.Add(new BatteryWidget(Random.Range(widgetConfig.MinBatteries, widgetConfig.MaxBatteries + 1)));
                                 }
                                 else
                                 {
-                                    widgetsResult.Add(new BatteryWidget((int)widgetConfig.BatteryType));
+                                    widgetsResult.Add(new BatteryWidget((int) widgetConfig.BatteryType));
                                 }
                             }
                             break;
@@ -578,6 +576,9 @@ public class TestHarness : MonoBehaviour
     TestSelectable currentSelectable;
     TestSelectableArea currentSelectableArea;
 
+    bool gamepadEnabled = false;
+    TestSelectable lastSelected;
+
     AudioSource audioSource;
     public List<AudioClip> AudioClips;
 
@@ -590,7 +591,7 @@ public class TestHarness : MonoBehaviour
         fakeInfo = gameObject.AddComponent<FakeBombInfo>();
         fakeInfo.SetupEdgework(EdgeworkConfiguration);
 
-        fakeInfo.ActivateLights += delegate()
+        fakeInfo.ActivateLights += delegate ()
         {
             TurnLightsOn();
             fakeInfo.OnLightsOn();
@@ -612,7 +613,7 @@ public class TestHarness : MonoBehaviour
             {
                 if (f.FieldType.Equals(typeof(KMBombInfo)))
                 {
-                    KMBombInfo component = (KMBombInfo)f.GetValue(s);
+                    KMBombInfo component = (KMBombInfo) f.GetValue(s);
                     component.TimeHandler += new KMBombInfo.GetTimeHandler(fakeInfo.GetTime);
                     component.FormattedTimeHandler += new KMBombInfo.GetFormattedTimeHandler(fakeInfo.GetFormattedTime);
                     component.StrikesHandler += new KMBombInfo.GetStrikesHandler(fakeInfo.GetStrikes);
@@ -625,14 +626,14 @@ public class TestHarness : MonoBehaviour
                 }
                 if (f.FieldType.Equals(typeof(KMGameInfo)))
                 {
-                    KMGameInfo component = (KMGameInfo)f.GetValue(s);
+                    KMGameInfo component = (KMGameInfo) f.GetValue(s);
                     component.OnLightsChange += new KMGameInfo.KMLightsChangeDelegate(fakeInfo.OnLights);
                     //component.OnAlarmClockChange += new KMGameInfo.KMAlarmClockChangeDelegate(fakeInfo.OnAlarm);
                     continue;
                 }
                 if (f.FieldType.Equals(typeof(KMGameCommands)))
                 {
-                    KMGameCommands component = (KMGameCommands)f.GetValue(s);
+                    KMGameCommands component = (KMGameCommands) f.GetValue(s);
                     component.OnCauseStrike += new KMGameCommands.KMCauseStrikeDelegate(fakeInfo.HandleStrike);
                     continue;
                 }
@@ -663,12 +664,15 @@ public class TestHarness : MonoBehaviour
         KMNeedyModule[] needyModules = FindObjectsOfType<KMNeedyModule>();
         fakeInfo.needyModules = needyModules.ToList();
         currentSelectable.Children = new TestSelectable[modules.Length + needyModules.Length];
+        currentSelectable.ChildRowLength = currentSelectable.Children.Length;
         for (int i = 0; i < modules.Length; i++)
         {
             KMBombModule mod = modules[i];
 
-            currentSelectable.Children[i] = modules[i].GetComponent<TestSelectable>();
-            modules[i].GetComponent<TestSelectable>().Parent = currentSelectable;
+            TestSelectable testSelectable = modules[i].GetComponent<TestSelectable>();
+            currentSelectable.Children[i] = testSelectable;
+            testSelectable.Parent = currentSelectable;
+            testSelectable.x = i;
 
             fakeInfo.modules.Add(new KeyValuePair<KMBombModule, bool>(modules[i], false));
             modules[i].OnPass = delegate ()
@@ -698,8 +702,10 @@ public class TestHarness : MonoBehaviour
 
         for (int i = 0; i < needyModules.Length; i++)
         {
-            currentSelectable.Children[modules.Length + i] = needyModules[i].GetComponent<TestSelectable>();
-            needyModules[i].GetComponent<TestSelectable>().Parent = currentSelectable;
+            TestSelectable testSelectable = needyModules[i].GetComponent<TestSelectable>();
+            currentSelectable.Children[modules.Length + i] = testSelectable;
+            testSelectable.Parent = currentSelectable;
+            testSelectable.x = modules.Length + i;
 
             needyModules[i].OnPass = delegate ()
             {
@@ -739,25 +745,37 @@ public class TestHarness : MonoBehaviour
 
     void Update()
     {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        Debug.DrawRay(ray.origin, ray.direction);
-        RaycastHit hit;
-        int layerMask = 1 << 11;
-        bool rayCastHitSomething = Physics.Raycast(ray, out hit, 1000, layerMask);
-        if (rayCastHitSomething)
+        if (!gamepadEnabled)
         {
-            TestSelectableArea hitArea = hit.collider.GetComponent<TestSelectableArea>();
-            if (hitArea != null)
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Debug.DrawRay(ray.origin, ray.direction);
+            RaycastHit hit;
+            int layerMask = 1 << 11;
+            bool rayCastHitSomething = Physics.Raycast(ray, out hit, 1000, layerMask);
+
+            if (rayCastHitSomething)
             {
-                if (currentSelectableArea != hitArea)
+                TestSelectableArea hitArea = hit.collider.GetComponent<TestSelectableArea>();
+                if (hitArea != null)
+                {
+                    if (currentSelectableArea != hitArea)
+                    {
+                        if (currentSelectableArea != null)
+                        {
+                            currentSelectableArea.Selectable.Deselect();
+                        }
+
+                        hitArea.Selectable.Select();
+                        currentSelectableArea = hitArea;
+                    }
+                }
+                else
                 {
                     if (currentSelectableArea != null)
                     {
                         currentSelectableArea.Selectable.Deselect();
+                        currentSelectableArea = null;
                     }
-
-                    hitArea.Selectable.Select();
-                    currentSelectableArea = hitArea;
                 }
             }
             else
@@ -768,42 +786,68 @@ public class TestHarness : MonoBehaviour
                     currentSelectableArea = null;
                 }
             }
+
+            if (Input.GetMouseButtonDown(0)) Interact();
+            if (Input.GetMouseButtonUp(0)) InteractEnded();
+            if (Input.GetMouseButtonDown(1)) Cancel();
         }
         else
         {
-            if (currentSelectableArea != null)
+            TestSelectable previousSelectable = lastSelected;
+            if (Input.GetKeyDown(KeyCode.X) || Input.GetKeyDown(KeyCode.Return)) Interact();
+            if (Input.GetKeyUp(KeyCode.X) || Input.GetKeyUp(KeyCode.Return)) InteractEnded();
+            if (Input.GetKeyDown(KeyCode.Z) || Input.GetKeyDown(KeyCode.Backspace)) Cancel();
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) EmulateDirection(Direction.Left);
+            if (Input.GetKeyDown(KeyCode.RightArrow)) EmulateDirection(Direction.Right);
+            if (Input.GetKeyDown(KeyCode.UpArrow)) EmulateDirection(Direction.Up);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) EmulateDirection(Direction.Down);
+
+            if (previousSelectable != lastSelected)
             {
-                currentSelectableArea.Selectable.Deselect();
-                currentSelectableArea = null;
+                previousSelectable.Deselect();
+                lastSelected.Select();
+                currentSelectableArea = lastSelected.SelectableArea;
             }
         }
+    }
 
-        if (Input.GetMouseButtonDown(0))
+    void EmulateDirection(Direction direction)
+    {
+        TestSelectable selectable = lastSelected.GetNearestSelectable(direction);
+        if (selectable)
         {
-            if (currentSelectableArea != null && currentSelectableArea.Selectable.Interact())
-            {
-                currentSelectable.DeactivateChildSelectableAreas(currentSelectableArea.Selectable);
-                currentSelectable = currentSelectableArea.Selectable;
-                currentSelectable.ActivateChildSelectableAreas();
-            }
+            lastSelected = selectable;
+            currentSelectable.LastSelectedChild = lastSelected;
         }
+    }
 
-        if (Input.GetMouseButtonUp(0))
+    void Interact()
+    {
+        if (currentSelectableArea != null && currentSelectableArea.Selectable.Interact())
         {
-            if (currentSelectableArea != null)
-            {
-                currentSelectableArea.Selectable.InteractEnded();
-            }
+            currentSelectable.DeactivateChildSelectableAreas(currentSelectableArea.Selectable);
+            currentSelectable = currentSelectableArea.Selectable;
+            currentSelectable.ActivateChildSelectableAreas();
+            lastSelected = currentSelectable.GetCurrentChild();
         }
+    }
 
-        if (Input.GetMouseButtonDown(1))
+    void InteractEnded()
+    {
+        if (currentSelectableArea != null)
         {
-            if (currentSelectable.Parent != null && currentSelectable.Cancel())
-            {
-                currentSelectable.DeactivateChildSelectableAreas(currentSelectable.Parent);
-                currentSelectable = currentSelectable.Parent;
-                currentSelectable.ActivateChildSelectableAreas();
-            }
+            currentSelectableArea.Selectable.InteractEnded();
+        }
+    }
+
+    void Cancel()
+    {
+        if (currentSelectable.Parent != null && currentSelectable.Cancel())
+        {
+            currentSelectable.DeactivateChildSelectableAreas(currentSelectable.Parent);
+            currentSelectable = currentSelectable.Parent;
+            currentSelectable.ActivateChildSelectableAreas();
+            lastSelected = currentSelectable.GetCurrentChild();
         }
     }
 
@@ -834,6 +878,7 @@ public class TestHarness : MonoBehaviour
         foreach (KMSelectable selectable in selectables)
         {
             TestSelectable testSelectable = selectable.gameObject.GetComponent<TestSelectable>();
+            testSelectable.Parent = selectable.Parent ? selectable.Parent.GetComponent<TestSelectable>() : null;
             testSelectable.Children = new TestSelectable[selectable.Children.Length];
             for (int i = 0; i < selectable.Children.Length; i++)
             {
@@ -1030,22 +1075,32 @@ public class TestHarness : MonoBehaviour
             fakeInfo.OnLightsOff();
         }
 
+        bool previous = gamepadEnabled;
+        gamepadEnabled = GUILayout.Toggle(gamepadEnabled, "Emulate Gamepad");
+        if (!previous && gamepadEnabled)
+        {
+            lastSelected = currentSelectable.GetCurrentChild();
+            lastSelected.Select();
+            currentSelectableArea = lastSelected.SelectableArea;
+        }
+
         GUILayout.Label("Time remaining: " + fakeInfo.GetFormattedTime());
 
         GUILayout.Space(10);
 
+        GUI.SetNextControlName("commandField");
         command = GUILayout.TextField(command);
-        if ((GUILayout.Button("Simulate Twitch Command") || Event.current.keyCode == KeyCode.Return) && command != "")
+        if ((GUILayout.Button("Simulate Twitch Command") || Event.current.keyCode == KeyCode.Return) && GUI.GetNameOfFocusedControl() == "commandField" && command != "")
         {
             Debug.Log("Twitch Command: " + command);
 
-            foreach (KMBombModule module in FindObjectsOfType<KMBombModule>())
+            foreach (var module in FindObjectsOfType<KMBombModule>().Concat<MonoBehaviour>(FindObjectsOfType<KMNeedyModule>()))
             {
                 Component[] allComponents = module.gameObject.GetComponentsInChildren<Component>(true);
-                foreach (Component component in allComponents)
+                foreach (var component in allComponents)
                 {
-                    System.Type type = component.GetType();
-                    MethodInfo method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                    var type = component.GetType();
+                    var method = type.GetMethod("ProcessTwitchCommand", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
                     if (method != null)
                         StartCoroutine(SimulateModule(component, module.transform, method, command));

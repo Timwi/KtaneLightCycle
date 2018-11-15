@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
+using KModkit;
 using LightCycle;
 using UnityEngine;
-
-using Rnd = UnityEngine.Random;
 
 /// <summary>
 /// On the Subject of Light Cycle
@@ -16,11 +14,13 @@ public class LightCycleModule : MonoBehaviour
     public KMBombInfo Bomb;
     public KMBombModule Module;
     public KMAudio Audio;
+    public KMColorblindMode ColorblindMode;
 
     public Material[] LitMats;
     public Material[] UnlitMats;
     public MeshRenderer[] Leds;
     public MeshRenderer[] ConfirmLeds;
+    public TextMesh[] ColorblindTexts;
 
     public KMSelectable Button;
 
@@ -29,12 +29,14 @@ public class LightCycleModule : MonoBehaviour
     private bool _isSolved;
     private int _seqIndex = 0;
     private int[] _solution;
+    private bool _colorblindMode;
     private const string _colorNames = "RYGBMW";
+    private static readonly string[] _cbNames = new[] { "Red", "Yellow", "Green", "Blue", "Magenta", "White" };
 
     private static int _moduleIdCounter = 1;
     private int _moduleId;
 
-    private static string[][] _table = @"
+    private static readonly string[][] _table = @"
 5B;BR;MG;Y5;41;RW;64;16;23;3M;GY;W2
 2R;6M;43;5B;R5;Y2;1G;MY;W6;34;BW;G1
 MY;24;YR;35;W2;GB;1W;R3;5G;46;BM;61
@@ -79,11 +81,14 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         _colors = Enumerable.Range(0, 6).ToArray();
         _colors.Shuffle();
         _isSolved = false;
+        _colorblindMode = ColorblindMode.ColorblindModeActive;
 
         for (int i = 0; i < 6; i++)
         {
             Leds[i].material = UnlitMats[_colors[i]];
             ConfirmLeds[i].material = UnlitMats[5];
+            ColorblindTexts[i].gameObject.SetActive(_colorblindMode);
+            ColorblindTexts[i].text = _cbNames[_colors[i]];
         }
 
         StartCoroutine(Blinkenlights());
@@ -186,7 +191,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
     }
 
 #pragma warning disable 414
-    private string TwitchHelpMessage = @"Submit your answer with “!{0} B R W M G Y”. Permissible colors are R (red), Y (yellow), G (green), B (blue), M (magenta), and W (white).";
+    private readonly string TwitchHelpMessage = @"!{0} B R W M G Y [permissible colors are R (red), Y (yellow), G (green), B (blue), M (magenta), and W (white)] | !{0} colorblind";
 #pragma warning restore 414
 
     public IEnumerator ProcessTwitchCommand(string command)
@@ -195,6 +200,17 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
             yield break;
 
         command = command.Trim().ToUpperInvariant();
+
+        if (command.Equals("COLORBLIND"))
+        {
+            if (_colorblindMode)
+                yield break;
+            for (int i = 0; i < 6; i++)
+                ColorblindTexts[i].gameObject.SetActive(true);
+            _colorblindMode = true;
+            yield return null;
+            yield break;
+        }
 
         var colors = command.Where(ch => !char.IsWhiteSpace(ch)).Select(ch => new { Index = _colorNames.IndexOf(ch), Char = ch }).ToArray();
         if (colors.Length == 0)
