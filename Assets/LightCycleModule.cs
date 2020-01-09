@@ -77,7 +77,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 ".Replace("\r", "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(line => line.Split(';')).ToArray();
 
 #pragma warning disable 414
-List<int> rgbValues = new List<int>() {0,0,0};
+List<int> arduinoRGBValues = new List<int>() {0,0,0};
 #pragma warning restore 414
 private Dictionary<string, List<int>> colorValues = new Dictionary<string, List<int>>()
 {
@@ -100,7 +100,7 @@ float arduinoProcessTime;
         _colors.Shuffle();
         _isSolved = false;
         _colorblindMode = ColorblindMode.ColorblindModeActive;
-        rgbValues=colorValues[_cbNames[_colors[0]]];
+        arduinoRGBValues=colorValues[_cbNames[_colors[0]]];
 
         for (int i = 0; i < 6; i++)
         {
@@ -181,7 +181,7 @@ float arduinoProcessTime;
     private IEnumerator Victory()
     {
         yield return new WaitForSeconds(.5f);
-        rgbValues=new List<int>() {0,0,0};
+        arduinoRGBValues=new List<int>() {0,0,0};
         for (int i = 0; i < 6; i++)
         {
             Leds[i].material = LitMats[_colors[i]];
@@ -198,7 +198,7 @@ float arduinoProcessTime;
         while (!_isSolved)
         {
             Leds[_curLed].material = LitMats[_colors[_curLed]];
-            rgbValues=colorValues[_cbNames[_colors[(_curLed+1)%6]]];
+            arduinoRGBValues=colorValues[_cbNames[_colors[(_curLed+1)%6]]];
             yield return new WaitForSeconds(arduinoConnected ? arduinoProcessTime : .5f);
             Leds[_curLed].material = UnlitMats[_colors[_curLed]];
 
