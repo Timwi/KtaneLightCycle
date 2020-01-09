@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using KModkit;
 using LightCycle;
@@ -75,6 +76,23 @@ YB;R2;WR;53;1W;35;BM;G4;6Y;4G;21;M6
 GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 ".Replace("\r", "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(line => line.Split(';')).ToArray();
 
+#pragma warning disable 414
+List<int> rgbValues = new List<int>() {0,0,0};
+#pragma warning restore 414
+private Dictionary<string, List<int>> colorValues = new Dictionary<string, List<int>>()
+{
+    {"Red",  new List<int>() {255,0,0}},
+    {"Yellow", new List<int>() {255,255,0}},
+    {"Green", new List<int>() {0,255,0}},
+    {"Blue", new List<int>() {0,0,255}},
+    {"Magenta", new List<int>() {255,0,255}},
+    {"White", new List<int>() {255,255,255}},
+};
+#pragma warning disable 649
+bool arduinoConnected;
+float arduinoProcessTime;
+#pragma warning restore 649
+
     void Start()
     {
         _moduleId = _moduleIdCounter++;
@@ -82,6 +100,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         _colors.Shuffle();
         _isSolved = false;
         _colorblindMode = ColorblindMode.ColorblindModeActive;
+        rgbValues=colorValues[_cbNames[_colors[0]]];
 
         for (int i = 0; i < 6; i++)
         {
@@ -162,6 +181,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
     private IEnumerator Victory()
     {
         yield return new WaitForSeconds(.5f);
+        rgbValues=new List<int>() {0,0,0};
         for (int i = 0; i < 6; i++)
         {
             Leds[i].material = LitMats[_colors[i]];
@@ -178,7 +198,8 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         while (!_isSolved)
         {
             Leds[_curLed].material = LitMats[_colors[_curLed]];
-            yield return new WaitForSeconds(.5f);
+            rgbValues=colorValues[_cbNames[_colors[(_curLed+1)%6]]];
+            yield return new WaitForSeconds(arduinoConnected ? arduinoProcessTime : .5f);
             Leds[_curLed].material = UnlitMats[_colors[_curLed]];
 
             _curLed = (_curLed + 1) % 6;
