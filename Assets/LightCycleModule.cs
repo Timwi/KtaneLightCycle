@@ -199,7 +199,7 @@ float arduinoProcessTime;
         {
             Leds[_curLed].material = LitMats[_colors[_curLed]];
             arduinoRGBValues=colorValues[_cbNames[_colors[(_curLed+1)%6]]];
-            yield return new WaitForSeconds(arduinoConnected ? arduinoProcessTime : .5f);
+            yield return new WaitForSeconds(arduinoConnected && arduinoProcessTime>.5f ? arduinoProcessTime : .5f);
             Leds[_curLed].material = UnlitMats[_colors[_curLed]];
 
             _curLed = (_curLed + 1) % 6;
