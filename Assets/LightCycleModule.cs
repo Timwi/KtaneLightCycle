@@ -90,7 +90,6 @@ private Dictionary<string, List<int>> colorValues = new Dictionary<string, List<
 };
 #pragma warning disable 649
 bool arduinoConnected;
-float arduinoProcessTime;
 #pragma warning restore 649
 
     void Start()
@@ -198,10 +197,9 @@ float arduinoProcessTime;
         while (!_isSolved)
         {
             Leds[_curLed].material = LitMats[_colors[_curLed]];
+            yield return new WaitForSeconds(.5f);
             arduinoRGBValues=colorValues[_cbNames[_colors[(_curLed+1)%6]]];
-            yield return new WaitForSeconds(arduinoConnected && arduinoProcessTime>.5f ? arduinoProcessTime : .5f);
             Leds[_curLed].material = UnlitMats[_colors[_curLed]];
-
             _curLed = (_curLed + 1) % 6;
         }
     }
