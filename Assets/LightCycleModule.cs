@@ -251,4 +251,16 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
             }
         }
     }
+
+    public IEnumerator TwitchHandleForcedSolve()
+    {
+        while (!_isSolved)
+        {
+            while (_solution[_seqIndex] != _colors[_curLed])
+                yield return true;
+
+            Button.OnInteract();
+            yield return new WaitForSeconds(.1f);
+        }
+    }
 }
