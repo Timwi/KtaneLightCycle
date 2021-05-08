@@ -27,6 +27,7 @@ public class LightCycleModule : MonoBehaviour
     private int[] _colors;
     private int _curLed;
     private bool _isSolved;
+    private bool _realSolve;
     private int _seqIndex = 0;
     private int[] _solution;
     private bool _colorblindMode;
@@ -170,6 +171,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
             Leds[i].material = UnlitMats[_colors[i]];
         }
         Module.HandlePass();
+        _realSolve = true;
     }
 
     private IEnumerator Blinkenlights()
@@ -262,5 +264,6 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
             Button.OnInteract();
             yield return new WaitForSeconds(.1f);
         }
+        while (!_realSolve) yield return true;
     }
 }
