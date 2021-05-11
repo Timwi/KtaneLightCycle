@@ -28,7 +28,7 @@ public class LightCycleModule : MonoBehaviour
     private int[] _colors;
     private int _curLed;
     private bool _isSolved;
-    private bool _realSolve;
+    private bool _solveAnimationDone;
     private int _seqIndex = 0;
     private int[] _solution;
     private bool _colorblindMode;
@@ -77,21 +77,21 @@ YB;R2;WR;53;1W;35;BM;G4;6Y;4G;21;M6
 GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 ".Replace("\r", "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(line => line.Split(';')).ToArray();
 
+    // Arduino-related stuff (from Qkrisi)
+    private readonly Dictionary<string, List<int>> colorValues = new Dictionary<string, List<int>>()
+    {
+        {"Red",  new List<int>() {255,0,0}},
+        {"Yellow", new List<int>() {255,255,0}},
+        {"Green", new List<int>() {0,255,0}},
+        {"Blue", new List<int>() {0,0,255}},
+        {"Magenta", new List<int>() {255,0,255}},
+        {"White", new List<int>() {255,255,255}},
+    };
+
 #pragma warning disable 414
-List<int> arduinoRGBValues = new List<int>() {0,0,0};
+    private List<int> arduinoRGBValues = new List<int>() { 0, 0, 0 };
 #pragma warning restore 414
-private Dictionary<string, List<int>> colorValues = new Dictionary<string, List<int>>()
-{
-    {"Red",  new List<int>() {255,0,0}},
-    {"Yellow", new List<int>() {255,255,0}},
-    {"Green", new List<int>() {0,255,0}},
-    {"Blue", new List<int>() {0,0,255}},
-    {"Magenta", new List<int>() {255,0,255}},
-    {"White", new List<int>() {255,255,255}},
-};
-#pragma warning disable 649
-bool arduinoConnected;
-#pragma warning restore 649
+    private bool arduinoConnected;
 
     void Start()
     {
@@ -100,7 +100,7 @@ bool arduinoConnected;
         _colors.Shuffle();
         _isSolved = false;
         _colorblindMode = ColorblindMode.ColorblindModeActive;
-        arduinoRGBValues=colorValues[_cbNames[_colors[0]]];
+        arduinoRGBValues = colorValues[_cbNames[_colors[0]]];
 
         for (int i = 0; i < 6; i++)
         {
@@ -181,7 +181,7 @@ bool arduinoConnected;
     private IEnumerator Victory()
     {
         yield return new WaitForSeconds(.5f);
-        arduinoRGBValues=new List<int>() {0,0,0};
+        arduinoRGBValues = new List<int>() { 0, 0, 0 };
         for (int i = 0; i < 6; i++)
         {
             Leds[i].material = LitMats[_colors[i]];
@@ -190,7 +190,7 @@ bool arduinoConnected;
             Leds[i].material = UnlitMats[_colors[i]];
         }
         Module.HandlePass();
-        _realSolve = true;
+        _solveAnimationDone = true;
     }
 
     private IEnumerator Blinkenlights()
@@ -200,7 +200,7 @@ bool arduinoConnected;
         {
             Leds[_curLed].material = LitMats[_colors[_curLed]];
             yield return new WaitForSeconds(.5f);
-            arduinoRGBValues=colorValues[_cbNames[_colors[(_curLed+1)%6]]];
+            arduinoRGBValues = colorValues[_cbNames[_colors[(_curLed + 1) % 6]]];
             Leds[_curLed].material = UnlitMats[_colors[_curLed]];
             _curLed = (_curLed + 1) % 6;
         }
@@ -283,6 +283,7 @@ bool arduinoConnected;
             Button.OnInteract();
             yield return new WaitForSeconds(.1f);
         }
-        while (!_realSolve) yield return true;
+        while (!_solveAnimationDone)
+            yield return true;
     }
 }
