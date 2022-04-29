@@ -224,11 +224,9 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
 
         if (command.Equals("COLORBLIND"))
         {
-            if (_colorblindMode)
-                yield break;
+            _colorblindMode = !_colorblindMode;
             for (int i = 0; i < 6; i++)
-                ColorblindTexts[i].gameObject.SetActive(true);
-            _colorblindMode = true;
+                ColorblindTexts[i].gameObject.SetActive(_colorblindMode);
             yield return null;
             yield break;
         }
