@@ -21,6 +21,8 @@ public class LightCycleModule : MonoBehaviour
     public Material[] UnlitMats;
     public MeshRenderer[] Leds;
     public MeshRenderer[] ConfirmLeds;
+    public Light[] ColoredLights;
+    public Light[] ConfirmLights;
     public TextMesh[] ColorblindTexts;
 
     public KMSelectable Button;
@@ -108,6 +110,11 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
             ConfirmLeds[i].material = UnlitMats[5];
             ColorblindTexts[i].gameObject.SetActive(_colorblindMode);
             ColorblindTexts[i].text = _cbNames[_colors[i]];
+            ColoredLights[i].color = Leds[i].material.color;
+            ColoredLights[i].enabled = false;
+            ConfirmLights[i].enabled = false;
+            ColoredLights[i].range *= transform.lossyScale.x;
+            ConfirmLights[i].range *= transform.lossyScale.x;
         }
 
         StartCoroutine(Blinkenlights());
@@ -165,6 +172,7 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         else
         {
             ConfirmLeds[_curLed].material = LitMats[5];
+            ConfirmLights[_curLed].enabled = true;
             Debug.LogFormat("[Light Cycle #{1}] Pressed button at {0}: correct.", _colorNames[_colors[_curLed]], _moduleId);
             _seqIndex++;
             Audio.PlaySoundAtTransform("Ding" + _seqIndex, Leds[_curLed].transform);
@@ -185,9 +193,11 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         for (int i = 0; i < 6; i++)
         {
             Leds[i].material = LitMats[_colors[i]];
+            ColoredLights[_curLed].enabled = true;
             Audio.PlaySoundAtTransform("Ding" + (i + 1), Button.transform);
             yield return new WaitForSeconds(.05f);
             Leds[i].material = UnlitMats[_colors[i]];
+            ColoredLights[_curLed].enabled = false;
         }
         Module.HandlePass();
         _solveAnimationDone = true;
@@ -199,9 +209,11 @@ GY;31;5M;R2;6W;MB;Y6;24;4G;B5;1R;W3
         while (!_isSolved)
         {
             Leds[_curLed].material = LitMats[_colors[_curLed]];
+            ColoredLights[_curLed].enabled = true;
             yield return new WaitForSeconds(.5f);
             arduinoRGBValues = colorValues[_cbNames[_colors[(_curLed + 1) % 6]]];
             Leds[_curLed].material = UnlitMats[_colors[_curLed]];
+            ColoredLights[_curLed].enabled = false;
             _curLed = (_curLed + 1) % 6;
         }
     }
